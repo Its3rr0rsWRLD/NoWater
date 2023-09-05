@@ -1,79 +1,62 @@
-﻿using System;
+using System;
 using BepInEx;
 using UnityEngine;
 using Utilla;
 
 namespace NoWater
 {
-    /// <summary>
-    /// This is your mod's main class.
-    /// </summary>
+    // Constants for easier maintenance
+    public static class GameObjectPaths
+    {
+        public const string WaterVolumes = "Environment Objects/LocalObjects_Prefab/Beach/B_WaterVolumes";
+    }
 
-    /* This attribute tells Utilla to look for [ModdedGameJoin] and [ModdedGameLeave] */
     [ModdedGamemode]
     [BepInDependency("org.legoandmars.gorillatag.utilla", "1.5.0")]
     [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
     public class Plugin : BaseUnityPlugin
     {
-        bool inRoom;
-        GameObject obj;
-
-        void Start()
+        // Called when the mod is enabled
+        void OnEnable()
         {
-            /* A lot of Gorilla Tag systems will not be set up when start is called /*
-			/* Put code in OnGameInitialized to avoid null references */
-
+            HarmonyPatches.ApplyHarmonyPatches();
             Utilla.Events.GameInitialized += OnGameInitialized;
         }
 
-        void OnEnable()
-        {
-            /* Set up your mod here */
-            /* Code here runs at the start and whenever your mod is enabled*/
-
-            HarmonyPatches.ApplyHarmonyPatches();
-        }
-
+        // Called when the mod is disabled
         void OnDisable()
         {
-            /* Undo mod setup here */
-            /* This provides support for toggling mods with ComputerInterface, please implement it :) */
-            /* Code here runs whenever your mod is disabled (including if it disabled on startup)*/
-            obj = GameObject.Find("Environment Objects/LocalObjects_Prefab/Beach/B_WaterVolumes");
-            obj.SetActive(true);
+            ToggleWater(true);
             HarmonyPatches.RemoveHarmonyPatches();
+            Utilla.Events.GameInitialized -= OnGameInitialized;
         }
 
+        // Called when the game is initialized
         void OnGameInitialized(object sender, EventArgs e)
         {
-            /* Code here runs after the game initializes (i.e. GorillaLocomotion.Player.Instance != null) */
+            // Code that runs after the game is initialized
         }
 
-        void Update()
-        {
-            /* Code here runs every frame when the mod is enabled */
-        }
-
-        /* This attribute tells Utilla to call this method when a modded room is joined */
         [ModdedGamemodeJoin]
         public void OnJoin(string gamemode)
         {
-            /* Activate your mod here */
-            /* This code will run regardless of if the mod is enabled*/
-            obj = GameObject.Find("Environment Objects/LocalObjects_Prefab/Beach/B_WaterVolumes");
-            obj.SetActive(false);
-            inRoom = true;
+            ToggleWater(false);
         }
 
-        /* This attribute tells Utilla to call this method when a modded room is left */
         [ModdedGamemodeLeave]
         public void OnLeave(string gamemode)
         {
-            /* Deactivate your mod here */
-            /* This code will run regardless of if the mod is enabled*/
-            obj = GameObject.Find("Environment Objects/LocalObjects_Prefab/Beach/B_WaterVolumes");
-            obj.SetActive(true);
-            inRoom = false;
+            ToggleWater(true);
+        }
+
+        // Helper method to toggle water
+        private void ToggleWater(bool isActive)
+        {
+            GameObject obj = GameObject.Find(GameObjectPaths.WaterVolumes);
+            if (obj != null)
+            {
+                obj.SetActive(isActive);
+            }
         }
     }
 }
